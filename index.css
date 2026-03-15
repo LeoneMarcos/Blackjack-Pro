@@ -175,17 +175,107 @@ button.primary:hover {
     }
 }
 
+/* Card Display Area */
+.cards-display {
+    display: flex;
+    justify-content: center;
+    gap: -20px; /* Slight overlap */
+    margin: 1.5rem 0;
+    min-height: 120px;
+    perspective: 1000px;
+}
+
+/* Premium Card Component */
+.card {
+    width: 80px;
+    height: 120px;
+    background: #fff;
+    border-radius: 8px;
+    position: relative;
+    color: #1a1a1a;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 8px;
+    font-weight: 800;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.4);
+    user-select: none;
+    animation: dealCard 0.5s cubic-bezier(0.23, 1, 0.32, 1) forwards;
+    transform-origin: center;
+    border: 1px solid #ddd;
+}
+
+.card.red {
+    color: #e11d48;
+}
+
+.card.black {
+    color: #1a1a1a;
+}
+
+.card-top {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    line-height: 1;
+}
+
+.card-value {
+    font-size: 1.25rem;
+}
+
+.card-suit {
+    font-size: 0.8rem;
+}
+
+.card-center {
+    font-size: 2rem;
+    align-self: center;
+}
+
+.card-bottom {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    line-height: 1;
+    transform: rotate(180deg);
+}
+
+/* DEALING ANIMATION */
+@keyframes dealCard {
+    0% {
+        opacity: 0;
+        transform: translate(-200px, -200px) rotate(-45deg) scale(0.5);
+    }
+    100% {
+        opacity: 1;
+        transform: translate(0, 0) rotate(var(--rotation, 0deg)) scale(1);
+    }
+}
+
+/* Hover effect for cards */
+.card:hover {
+    z-index: 10;
+    transform: translateY(-10px) rotate(var(--rotation, 0deg)) scale(1.1) !important;
+    box-shadow: 0 12px 20px rgba(0,0,0,0.5);
+}
+
+/* Overlap handling */
+.card:not(:first-child) {
+    margin-left: -40px;
+}
+
 /* Modal / Pop-up Styles */
 .modal {
     display: none;
     position: fixed;
-    z-index: 1000;
+    z-index: 2000;
     left: 0;
     top: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.8);
-    backdrop-filter: blur(8px);
+    width: 100vw;
+    height: 100vh;
+    background-color: rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(12px);
     align-items: center;
     justify-content: center;
     opacity: 0;
@@ -205,7 +295,7 @@ button.primary:hover {
     max-width: 500px;
     width: 90%;
     text-align: center;
-    box-shadow: 0 0 50px rgba(192, 160, 96, 0.2);
+    box-shadow: 0 0 50px rgba(192, 160, 96, 0.3);
     transform: scale(0.8);
     transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
@@ -243,14 +333,14 @@ button.primary:hover {
 }
 
 .modal-score-box div {
-    font-size: 2.5rem;
-    font-weight: 700;
+    font-size: 3rem;
+    font-weight: 800;
 }
 
 .modal-vs {
     font-style: italic;
     color: var(--text-muted);
-    font-size: 0.9rem;
+    font-size: 1rem;
 }
 
 #modalReason {
@@ -260,11 +350,12 @@ button.primary:hover {
 
 .winning-score {
     color: var(--success) !important;
-    text-shadow: 0 0 15px rgba(34, 197, 94, 0.5);
+    text-shadow: 0 0 20px rgba(34, 197, 94, 0.4);
 }
 
 .losing-score {
     color: var(--danger) !important;
     opacity: 0.6;
 }
+
 

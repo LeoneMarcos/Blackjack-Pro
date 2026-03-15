@@ -1,11 +1,36 @@
 /**
- * Blackjack Pro - Core Game Logic
+ * Blackjack Pro - Core Game Logic & Card System
  */
+
+// Constants
+const SUITS = [
+    { name: 'Hearts', symbol: '♥', color: 'red' },
+    { name: 'Diamonds', symbol: '♦', color: 'red' },
+    { name: 'Clubs', symbol: '♣', color: 'black' },
+    { name: 'Spades', symbol: '♠', color: 'black' }
+];
+
+const VALUES = [
+    { label: 'A', value: 11 },
+    { label: '2', value: 2 },
+    { label: '3', value: 3 },
+    { label: '4', value: 4 },
+    { label: '5', value: 5 },
+    { label: '6', value: 6 },
+    { label: '7', value: 7 },
+    { label: '8', value: 8 },
+    { label: '9', value: 9 },
+    { label: '10', value: 10 },
+    { label: 'J', value: 10 },
+    { label: 'Q', value: 10 },
+    { label: 'K', value: 10 }
+];
 
 // Game State
 const state = {
-    p1: { score: 0, wins: 0, el: null, winEl: null },
-    p2: { score: 0, wins: 0, el: null, winEl: null },
+    p1: { score: 0, wins: 0, cards: [], el: null, cardContainer: null },
+    p2: { score: 0, wins: 0, cards: [], el: null, cardContainer: null },
+    deck: [],
     timer: 30,
     npcActive: false,
     gameOver: false
@@ -18,6 +43,8 @@ const dom = {
     p2Score: document.getElementById('idDoElemento2'),
     p1Wins: document.getElementById('winnerP1'),
     p2Wins: document.getElementById('winnerP2'),
+    p1Cards: document.getElementById('cardsP1'),
+    p2Cards: document.getElementById('cardsP2'),
     history: document.getElementById('historico'),
     npcBtn: document.getElementById('TrocarNPC'),
     p2Btn: document.getElementById('cartaP2'),
@@ -32,12 +59,31 @@ const dom = {
 // Initialization
 function init() {
     state.p1.el = dom.p1Score;
-    state.p1.winEl = dom.p1Wins;
+    state.p1.cardContainer = dom.p1Cards;
     state.p2.el = dom.p2Score;
-    state.p2.winEl = dom.p2Wins;
+    state.p2.cardContainer = dom.p2Cards;
     
+    createDeck();
     updateDisplay();
     startTimerCycle();
+}
+
+// Deck Logic
+function createDeck() {
+    state.deck = [];
+    for (const suit of SUITS) {
+        for (const val of VALUES) {
+            state.deck.push({ ...val, ...suit });
+        }
+    }
+    shuffleDeck();
+}
+
+function shuffleDeck() {
+    for (let i = state.deck.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [state.deck[i], state.deck[j]] = [state.deck[j], state.deck[i]];
+    }
 }
 
 // Timer Logic
@@ -50,7 +96,6 @@ function startTimerCycle() {
         state.timer--;
         dom.timer.textContent = state.timer;
 
-        // NPC Turn Automation: Check every second for responsiveness
         if (state.npcActive && state.timer > 0) {
             handleNPCTurn();
         }
@@ -68,25 +113,16 @@ function handleNPCTurn() {
     const p1 = state.p1.score;
     const p2 = state.p2.score;
 
-    // Strategic AI: 
-    // 1. If P1 busted, NPC stops immediately (it already won).
-    // 2. If NPC is already ahead of P1, it stops to avoid risking a bust.
-    // 3. NPC only hits if it's behind or needs a basic minimum (like 15) to be competitive.
-    
     let shouldHit = false;
 
     if (p1 > 21) {
-        // P1 already bust, NPC doesn't need to do anything.
         shouldHit = false;
     } else if (p2 < p1) {
-        // NPC is losing, must hit.
         shouldHit = true;
     } else if (p2 === p1 && p2 < 17) {
-        // NPC is tied and score is low, risk a hit to win.
         shouldHit = true;
     }
     
-    // Safety check: Never hit if already at 21 or if it would be a reckless risk when ahead.
     if (shouldHit && p2 < 21) {
         drawCard('p2');
     }
@@ -95,29 +131,67 @@ function handleNPCTurn() {
 // Game Actions
 function drawCard(player) {
     if (state.gameOver) return;
+    if (state.deck.length === 0) createDeck();
 
-    const cardValue = Math.floor(Math.random() * 10) + 1;
-    state[player].score += cardValue;
+    const card = state.deck.pop();
+    state[player].cards.push(card);
     
-    // Add animation class
-    state[player].el.classList.remove('score-update');
-    void state[player].el.offsetWidth; // Trigger reflow
-    state[player].el.classList.add('score-update');
-    
+    recalculateScore(player);
+    renderCard(player, card);
     updateDisplay();
 
     if (state[player].score === 21) {
-        endRound(player === 'p1' ? 'p1' : 'p2');
-        return;
+        endRound(player);
     } else if (state[player].score > 21) {
         endRound(player === 'p1' ? 'p2' : 'p1');
-        return;
     }
 
-    // If P1 drew a card and NPC is active, NPC should reconsider immediately
+    // Reaction for NPC
     if (player === 'p1' && state.npcActive) {
-        setTimeout(handleNPCTurn, 400); // Slight delay for visual flow
+        setTimeout(handleNPCTurn, 600);
     }
+}
+
+function recalculateScore(player) {
+    let total = 0;
+    let aces = 0;
+
+    state[player].cards.forEach(card => {
+        if (card.label === 'A') aces++;
+        total += card.value;
+    });
+
+    // Ace logic: 11 down to 1 if bust
+    while (total > 21 && aces > 0) {
+        total -= 10;
+        aces--;
+    }
+
+    state[player].score = total;
+}
+
+function renderCard(player, card) {
+    const container = state[player].cardContainer;
+    const cardEl = document.createElement('div');
+    cardEl.className = `card ${card.color}`;
+    
+    // Random rotation for natural look
+    const rot = (Math.random() * 6 - 3).toFixed(2);
+    cardEl.style.setProperty('--rotation', `${rot}deg`);
+
+    cardEl.innerHTML = `
+        <div class="card-top">
+            <div class="card-value">${card.label}</div>
+            <div class="card-suit">${card.symbol}</div>
+        </div>
+        <div class="card-center">${card.symbol}</div>
+        <div class="card-bottom">
+            <div class="card-value">${card.label}</div>
+            <div class="card-suit">${card.symbol}</div>
+        </div>
+    `;
+
+    container.appendChild(cardEl);
 }
 
 function endRound(manualWinner) {
@@ -139,7 +213,7 @@ function endRound(manualWinner) {
             reason = "Player 1 busted!";
         } else if (p2 > 21) {
             winner = 'p1';
-            reason = "Player 2 busted!";
+            reason = (state.npcActive ? "NPC" : "Player 2") + " busted!";
         } else if (p1 === p2) {
             winner = 'tie';
             reason = "Equal scores!";
@@ -148,23 +222,19 @@ function endRound(manualWinner) {
             reason = "P1 is closer to 21!";
         } else {
             winner = 'p2';
-            reason = "P2 is closer to 21!";
+            reason = (state.npcActive ? "NPC" : "P2") + " is closer to 21!";
         }
     } else {
-        // Check actual scores to provide the correct reason
         if (p1 === 21 && p2 === 21) reason = "Double Blackjack!";
         else if (p1 === 21 && winner === 'p1') reason = "P1 hit 21!";
-        else if (p2 === 21 && winner === 'p2') reason = "P2 hit 21!";
+        else if (p2 === 21 && winner === 'p2') reason = (state.npcActive ? "NPC" : "P2") + " hit 21!";
         else if (p1 > 21) reason = "P1 busted!";
         else if (p2 > 21) reason = (state.npcActive ? "NPC" : "P2") + " busted!";
-        else reason = (winner === 'p1' ? "P1" : "P2") + " won the round!";
+        else reason = (winner === 'p1' ? "P1" : (state.npcActive ? "NPC" : "P2")) + " won the round!";
     }
 
-    if (winner === 'p1') {
-        state.p1.wins++;
-    } else if (winner === 'p2') {
-        state.p2.wins++;
-    }
+    if (winner === 'p1') state.p1.wins++;
+    else if (winner === 'p2') state.p2.wins++;
 
     showModal(winner, reason);
 }
@@ -178,7 +248,6 @@ function showModal(winner, reason) {
     dom.modalP2Label.textContent = state.npcActive ? "NPC" : "P2";
     dom.modalReason.textContent = reason;
 
-    // Highlights
     dom.modalP1Score.className = winner === 'p1' ? 'winning-score' : (winner === 'p2' ? 'losing-score' : '');
     dom.modalP2Score.className = winner === 'p2' ? 'winning-score' : (winner === 'p1' ? 'losing-score' : '');
 
@@ -188,7 +257,6 @@ function showModal(winner, reason) {
         dom.modalTitle.textContent = winner === 'p1' ? "P1 Wins!" : (state.npcActive ? "NPC Wins!" : "P2 Wins!");
     }
 
-    // Restore Last Round History update
     const winnerDisplay = winner === 'p1' ? 'P1' : (winner === 'p2' ? (state.npcActive ? 'NPC' : 'P2') : 'None');
     dom.history.textContent = `Last Round: P1 scored ${p1}, P2 scored ${p2}. ${winner === 'tie' ? "It was a Tie!" : winnerDisplay + " Won!"}`;
 
@@ -198,9 +266,16 @@ function showModal(winner, reason) {
 function resetRound() {
     state.p1.score = 0;
     state.p2.score = 0;
+    state.p1.cards = [];
+    state.p2.cards = [];
     state.timer = 30;
     state.gameOver = false;
+    
+    dom.p1Cards.innerHTML = '';
+    dom.p2Cards.innerHTML = '';
     dom.modal.classList.remove('show');
+    
+    if (state.deck.length < 10) createDeck(); // Refresh deck if low
     updateDisplay();
 }
 
@@ -212,14 +287,36 @@ function reload() {
 }
 
 function updateDisplay() {
-    dom.p1Score.textContent = state.p1.score;
-    dom.p2Score.textContent = state.p2.score;
+    state.p1.el.textContent = formatScore(state.p1);
+    state.p2.el.textContent = formatScore(state.p2);
     dom.p1Wins.textContent = `Wins: ${state.p1.wins}`;
     dom.p2Wins.textContent = `Wins: ${state.p2.wins}`;
     dom.timer.textContent = state.timer;
 }
 
-// UI Controllers (Linked to HTML)
+function formatScore(playerData) {
+    const total = playerData.score;
+    const cards = playerData.cards;
+    
+    if (cards.length === 0) return 0;
+    
+    // Check if the current score is "Soft" (includes an Ace counted as 11)
+    let totalWithoutAces = 0;
+    let acesCount = 0;
+    cards.forEach(c => {
+        if (c.label === 'A') acesCount++;
+        else totalWithoutAces += c.value;
+    });
+
+    // If we have at least one Ace and the total is 11, it's a first-card Ace
+    if (cards.length === 1 && cards[0].label === 'A') {
+        return "1/11";
+    }
+
+    return total;
+}
+
+// UI Controllers
 window.puxarCartaP1 = () => drawCard('p1');
 window.puxarCartaP2 = () => drawCard('p2');
 
@@ -229,8 +326,6 @@ window.NPC = () => {
     dom.p2Btn.style.display = state.npcActive ? 'none' : 'flex';
     resetRound();
 };
-
-window.mudarNivel = null; // Removed
 
 window.reload = reload;
 
