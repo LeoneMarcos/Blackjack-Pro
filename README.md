@@ -1,5 +1,7 @@
 # 🃏 Blackjack Pro
 
+![Blackjack Pro Screenshot](screenshot.png)
+
 A modern, sleek, and strategic 21 (Blackjack) web game. Transform your basic card game experience into a professional casino-style interface with reactive AI, glassmorphism design, and smooth animations.
 
 ## ✨ Features
