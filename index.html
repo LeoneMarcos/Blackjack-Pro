@@ -3,21 +3,72 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <title>Blackjack Pro - 21 Game</title>
+    <link rel="stylesheet" href="index.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
 </head>
 <body>
-    <div id ='timer'></div>
-    <h1>Player 1</h1>
-    <div id="winnerP1"></div>
-    <h1>Player 2</h1>
-    <div id="winnerP2"></div>
-    <button onclick="puxarCartaP1()">Puxar Carta</button>
-    <div id="idDoElemento"></div>   
-    <button onclick="puxarCartaP2()" id="cartaP2">Puxar Carta</button>
-    <div id="idDoElemento2"></div>
-    <button onclick="NPC()" id="TrocarNPC">NPC OFF</button>
-    <button onclick="mudarNivel()" id="nivel">Normal</button>
-    <div id = 'historico'></div>
+    <div class="game-container">
+        <div class="header">
+            <h1>Blackjack <span style="color: var(--primary)">Pro</span></h1>
+            <div class="timer-box">
+                <span class="timer-label">Time Remaining:</span>
+                <div id="timer">30</div>
+            </div>
+        </div>
+
+        <div class="game-layout">
+            <!-- Player 1 Section -->
+            <div class="player-section" id="sectionP1">
+                <div class="player-name">Player 1</div>
+                <div id="idDoElemento" class="player-score">0</div>
+                <div id="winnerP1" class="player-wins">Wins: 0</div>
+                <div class="controls">
+                    <button onclick="puxarCartaP1()" class="primary">Hit (1)</button>
+                </div>
+            </div>
+
+            <!-- Player 2 / NPC Section -->
+            <div class="player-section" id="sectionP2">
+                <div class="player-name">Player 2</div>
+                <div id="idDoElemento2" class="player-score">0</div>
+                <div id="winnerP2" class="player-wins">Wins: 0</div>
+                <div class="controls">
+                    <button onclick="puxarCartaP2()" id="cartaP2">Hit (2)</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="controls main-controls">
+            <button onclick="NPC()" id="TrocarNPC">NPC: OFF</button>
+            <button onclick="reload()">Reset Game (R)</button>
+        </div>
+
+        <div id="historico" class="history">Last round: -</div>
+    </div>
+
+    <!-- Winner Pop-up Modal -->
+    <div id="winnerModal" class="modal">
+        <div class="modal-content">
+            <h2 id="modalTitle">Winner!</h2>
+            <div class="modal-body">
+                <div class="modal-scores">
+                    <div class="modal-score-box">
+                        <span>P1</span>
+                        <div id="modalP1Score">0</div>
+                    </div>
+                    <div class="modal-vs">VS</div>
+                    <div class="modal-score-box">
+                        <span id="modalP2Label">P2</span>
+                        <div id="modalP2Score">0</div>
+                    </div>
+                </div>
+                <p id="modalReason">Closest to 21 wins!</p>
+            </div>
+            <button onclick="resetRound()" class="primary">Next Round</button>
+        </div>
+    </div>
+
+    <script src="index.js"></script>
 </body>
-<script src="index.js"></script>
 </html>
